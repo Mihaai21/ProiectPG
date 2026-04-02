@@ -1,3 +1,4 @@
+import pandas as pd
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -41,7 +42,26 @@ def read_identifier(identifier_name: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Identifier not found")
 
     return identifier
+@app.get("/stats")
+def get_stats():
+    # date mock (fără DB)
+    data = pd.DataFrame({
+        "identifier_type": [
+            "Finished Product Part",
+            "Packaging Material Part",
+            "Packaging Material Part",
+            "Assembled Product Part",
+            "Assembled Product Part",
+            "Material Part"
+        ],
+        "consumers": [150, 200, 100, 120, 80, 60]
+    })
 
+    # statistica: media consumatori pe tip
+    grouped = data.groupby("identifier_type")["consumers"].mean()
+    result = grouped.to_dict()
+
+    return result
 @app.put("/identifiers/{identifier_name}", response_model=IdentifierResponse)
 def update_identifier(identifier_name: str, identifier: IdentifierCreate, db: Session = Depends(get_db)):
     db_identifier = db.query(Identifier).filter(
